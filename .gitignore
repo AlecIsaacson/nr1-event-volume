@@ -1,0 +1,9 @@
+.nos
+.idea
+dist
+node_modules
+coverage
+tmp
+*.tar.gz
+.DS_Store
+*.bak

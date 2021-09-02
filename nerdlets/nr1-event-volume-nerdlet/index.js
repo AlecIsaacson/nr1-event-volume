@@ -1,3 +1,5 @@
+//Nerdlet to review all data in an account
+
 import React from 'react';
 import { NrqlQuery, Spinner, Table, TableHeader, TableHeaderCell, TableRow, TableRowCell, Stack, StackItem, JsonChart, HeadingText, BlockText, Grid, GridItem } from 'nr1';
 
