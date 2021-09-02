@@ -41,6 +41,7 @@ export default class EventVolumeNerdlet extends React.Component {
                       <TableHeader>
                         <TableHeaderCell
                           value={({ item }) => console.debug('Item:', item)}
+                          width="fit-content"
                         >
                           Event Type
                         </TableHeaderCell>
