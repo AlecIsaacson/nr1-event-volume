@@ -1,0 +1,7 @@
+{
+  "schemaType": "LAUNCHER",
+  "id": "nr1-event-volume-launcher",
+  "displayName": "NR1 Event Volume",
+  "description": "Describe me",
+  "rootNerdletId": "nr1-event-volume-nerdlet"
+}
