@@ -21,7 +21,7 @@ export default class EventVolumeNerdlet extends React.Component {
   
   render() {
     console.debug("State: ", this.state)
-    const { selectedEventType } = this.state;
+    const selectedEventType = this.state;
     const eventTypeQuery = `SHOW eventTypes`
     return(
       <Grid class-name="primary-grid" spacingType={[Grid.SPACING_TYPE.NONE, Grid.SPACING_TYPE.NONE]}>
@@ -35,9 +35,6 @@ export default class EventVolumeNerdlet extends React.Component {
                   if (error) return <BlockText>{error.message}</BlockText>
                   if (data) {
                     console.debug('Raw Data:', data[0].data[0])
-                    // data[0].data[0].eventTypes.forEach((item, i) => {
-                    //   console.debug('Item:', item);
-                    // });
                   }
                   return(
                     <Table items={data[0].data[0].eventTypes} className="top-chart">
@@ -58,8 +55,8 @@ export default class EventVolumeNerdlet extends React.Component {
                       </TableHeader>
                       {({ item }) => (
                         <TableRow onClick={(evt, item, index) => {
-                          console.debug("Clicked:", item.item)
-                          this.setState({ selectedEventType: item.item })
+                          console.debug("Clicked:", item)
+                          //this.setState({ selectedEventType: {item} })
                         }}>
                           <TableRowCell>
                             {item}
@@ -87,11 +84,11 @@ export default class EventVolumeNerdlet extends React.Component {
               </NrqlQuery> 
             </StackItem>
           </Stack>
-          { selectedEventType && <Stack fullWidth gapType={Stack.GAP_TYPE.LOOSE}>
-            {console.debug("Timeseries Event Type:", selectedEventType)}
+          { this.state.selectedEventType && <Stack fullWidth gapType={Stack.GAP_TYPE.LOOSE}>
+            {console.debug("Timeseries selected event: ", this.state.selectedEventType)}
             <StackItem grow={true} className="row-spacing">
-              <HeadingText style={{marginLeft: '25px'}}>Event Volume Timeseries (bytes)</HeadingText>
-              <LineChart accountId={this.accountId} className="chart" query={`FROM \`${selectedEventType}\` SELECT bytecountestimate() TIMESERIES`}/>
+              <HeadingText style={{marginLeft: '25px'}}>Event Volume Timeseries (GB)</HeadingText>
+              <LineChart accountId={this.accountId} className="chart" query={`FROM \`${this.state.selectedEventType.inEventType.item}\` SELECT bytecountestimate()/10e8 TIMESERIES`}/>
             </StackItem>
           </Stack>
           }
