@@ -24,7 +24,7 @@ export default class EventVolumeNerdlet extends React.Component {
   }
   
   render() {
-    console.debug("Boolean: ", Boolean(selectedEventType))
+    console.debug("State: ", this.state)
     const selectedEventType = this.state;
     const eventTypeQuery = `SHOW eventTypes`
     return(
@@ -38,12 +38,7 @@ export default class EventVolumeNerdlet extends React.Component {
                   if (loading) return <Spinner />
                   if (error) return <BlockText>{error.message}</BlockText>
                   if (data) {
-                    console.debug('State:', this.state)
                     console.debug('Raw Data:', data[0].data[0])
-                    console.debug("Boolean1: ", Boolean(selectedEventType))
-                    // data[0].data[0].eventTypes.forEach((item, i) => {
-                    //   console.debug('Item:', item);
-                    // });
                   }
                   return(
                     <Table items={data[0].data[0].eventTypes} className="top-chart">
@@ -64,7 +59,6 @@ export default class EventVolumeNerdlet extends React.Component {
                       </TableHeader>
                       {({ item }) => (
                         <TableRow onClick={(evt, item, index) => {
-                          console.debug("Boolean2: ", Boolean(selectedEventType))
                           console.debug("Clicked:", item)
                           this.setInfo(item)
                         }}>
@@ -77,7 +71,6 @@ export default class EventVolumeNerdlet extends React.Component {
                                 if (loading) return <Spinner />
                                 if (error) return <BlockText>{error.message}</BlockText>
                                 if (data) {
-                                  console.debug("Boolean3: ", Boolean(selectedEventType))
                                   //console.debug('Volume data:', data[0].data[0].bytecountestimate)
                                 }
                                 var dataGb = data[0].data[0].bytecountestimate/10e8
@@ -95,10 +88,11 @@ export default class EventVolumeNerdlet extends React.Component {
               </NrqlQuery> 
             </StackItem>
           </Stack>
-          { selectedEventType && <Stack fullWidth gapType={Stack.GAP_TYPE.LOOSE}>
-            {console.debug("Boolean4: ", Boolean(selectedEventType))}
+          { this.state.selectedEventType && <Stack fullWidth gapType={Stack.GAP_TYPE.LOOSE}>
+            {console.debug("Timeseries selected event: ", this.state.selectedEventType)}
             <StackItem grow={true} className="row-spacing">
-              <HeadingText style={{marginLeft: '25px'}}>Event Volume Timeseries(GB)</HeadingText>
+              <HeadingText style={{marginLeft: '25px'}}>Event Volume Timeseries (GB)</HeadingText>
+              <LineChart accountId={this.accountId} className="chart" query={`FROM \`${this.state.selectedEventType.inEventType.item}\` SELECT bytecountestimate()/10e8 TIMESERIES`}/>
             </StackItem>
           </Stack>
           }
