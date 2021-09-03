@@ -1,24 +1,31 @@
 //Nerdlet to review all data in an account
 
 import React from 'react';
-import { NrqlQuery, Spinner, Table, TableHeader, TableHeaderCell, TableRow, TableRowCell, Stack, StackItem, JsonChart, HeadingText, BlockText, Grid, GridItem } from 'nr1';
+import { NrqlQuery, Spinner, Table, TableHeader, TableHeaderCell, TableRow, TableRowCell, Stack, StackItem, JsonChart, HeadingText, BlockText, Grid, GridItem, LineChart } from 'nr1';
 
 // https://docs.newrelic.com/docs/new-relic-programmable-platform-introduction
 
 export default class EventVolumeNerdlet extends React.Component {
   constructor(props){
     super(props);
+    console.debug("Props", this); //eslint-disable-line
     this.accountId = 734056;
     this.state = {
-      appGuid: null,
-      appName: null,
-      appSLO: null,
+      selectedEventType: null,
     };
-    console.debug("Props", props); //eslint-disable-line
   }
   
+  setInfo(inEventType) {
+    this.setState({ selectedEventType: {inEventType} })
+  }
+  
+  _onClickTableHeaderCell(key, event, sortingData) {
+    this.setState({ [key]: sortingData.nextSortingType });
+  }
   
   render() {
+    console.debug("Boolean: ", Boolean(selectedEventType))
+    const selectedEventType = this.state;
     const eventTypeQuery = `SHOW eventTypes`
     return(
       <Grid class-name="primary-grid" spacingType={[Grid.SPACING_TYPE.NONE, Grid.SPACING_TYPE.NONE]}>
@@ -31,7 +38,9 @@ export default class EventVolumeNerdlet extends React.Component {
                   if (loading) return <Spinner />
                   if (error) return <BlockText>{error.message}</BlockText>
                   if (data) {
+                    console.debug('State:', this.state)
                     console.debug('Raw Data:', data[0].data[0])
+                    console.debug("Boolean1: ", Boolean(selectedEventType))
                     // data[0].data[0].eventTypes.forEach((item, i) => {
                     //   console.debug('Item:', item);
                     // });
@@ -40,18 +49,24 @@ export default class EventVolumeNerdlet extends React.Component {
                     <Table items={data[0].data[0].eventTypes} className="top-chart">
                       <TableHeader>
                         <TableHeaderCell
-                          value={({ item }) => console.debug('Item:', item)}
+                          value={({ item }) => item}
+                          sortable
+                          sortingType={this.state.column_0}
+                          sortingOrder={1}
+                          onClick={this._onClickTableHeaderCell.bind(this, 'column_0')}
                           width="fit-content"
                         >
                           Event Type
                         </TableHeaderCell>
                         <TableHeaderCell>
-                          Amount of Data 
+                          Amount of Data (GB) 
                         </TableHeaderCell>
                       </TableHeader>
                       {({ item }) => (
                         <TableRow onClick={(evt, item, index) => {
+                          console.debug("Boolean2: ", Boolean(selectedEventType))
                           console.debug("Clicked:", item)
+                          this.setInfo(item)
                         }}>
                           <TableRowCell>
                             {item}
@@ -62,9 +77,12 @@ export default class EventVolumeNerdlet extends React.Component {
                                 if (loading) return <Spinner />
                                 if (error) return <BlockText>{error.message}</BlockText>
                                 if (data) {
+                                  console.debug("Boolean3: ", Boolean(selectedEventType))
                                   //console.debug('Volume data:', data[0].data[0].bytecountestimate)
                                 }
-                                return(data[0].data[0].bytecountestimate)
+                                var dataGb = data[0].data[0].bytecountestimate/10e8
+                                dataGb = dataGb.toFixed(2)
+                                return(dataGb)
                               }}
                             </NrqlQuery>
                           </TableRowCell>  
@@ -77,6 +95,13 @@ export default class EventVolumeNerdlet extends React.Component {
               </NrqlQuery> 
             </StackItem>
           </Stack>
+          { selectedEventType && <Stack fullWidth gapType={Stack.GAP_TYPE.LOOSE}>
+            {console.debug("Boolean4: ", Boolean(selectedEventType))}
+            <StackItem grow={true} className="row-spacing">
+              <HeadingText style={{marginLeft: '25px'}}>Event Volume Timeseries(GB)</HeadingText>
+            </StackItem>
+          </Stack>
+          }
         </GridItem>
       </Grid>
     );
