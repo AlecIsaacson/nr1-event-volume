@@ -53,7 +53,7 @@ export default class EventVolumeNerdlet extends React.Component {
                                 value={({ item }) => item}
                                 sortable
                                 sortingType={this.state.column_0}
-                                sortingOrder={1}
+                                sortingOrder={0}
                                 onClick={this._onClickTableHeaderCell.bind(this, 'column_0')}
                                 width="fit-content"
                               >
@@ -65,7 +65,7 @@ export default class EventVolumeNerdlet extends React.Component {
                             </TableHeader>
                             {({ item }) => (
                               <TableRow onClick={(evt, item, index) => {
-                                console.debug("Clicked:", item.item)
+                                console.debug("Clicked:", item)
                                 this.setState({ selectedEventType: item.item })
                               }}>
                                 <TableRowCell>
@@ -78,10 +78,10 @@ export default class EventVolumeNerdlet extends React.Component {
                                       if (error) return <BlockText>{error.message}</BlockText>
                                       if (data) {
                                         //console.debug('Volume data:', data[0].data[0].bytecountestimate)
+                                        var dataGb = data[0].data[0].bytecountestimate/10e8
+                                        dataGb = dataGb.toFixed(2)
+                                        return(dataGb)
                                       }
-                                      var dataGb = data[0].data[0].bytecountestimate/10e8
-                                      dataGb = dataGb.toFixed(2)
-                                      return(dataGb)
                                     }}
                                   </NrqlQuery>
                                 </TableRowCell>  
