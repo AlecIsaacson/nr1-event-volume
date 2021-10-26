@@ -1,7 +1,7 @@
 //Nerdlet to review all data in an account
 
 import React from 'react';
-import { PlatformStateContext, NrqlQuery, Spinner, Table, TableHeader, TableHeaderCell, TableRow, TableRowCell, Stack, StackItem, JsonChart, HeadingText, BlockText, Grid, GridItem, LineChart } from 'nr1';
+import { PlatformStateContext, NrqlQuery, Spinner, Table, TableHeader, TableHeaderCell, TableRow, TableRowCell, Stack, StackItem, JsonChart, HeadingText, BlockText, Grid, GridItem, LineChart, NerdGraphQuery } from 'nr1';
 
 // https://docs.newrelic.com/docs/new-relic-programmable-platform-introduction
 
@@ -22,14 +22,16 @@ export default class EventVolumeNerdlet extends React.Component {
   render() {
     console.debug("State: ", this.state)
     const { selectedEventType } = this.state;
-    const eventTypeQuery = `SHOW eventTypes`
     const eventTimeseriesQuery = `FROM \`${selectedEventType}\` SELECT bytecountestimate() TIMESERIES`
+    const eventTypeQuery = `SHOW eventTypes`
+    
     return(
       <PlatformStateContext.Consumer>
         {(platformUrlState) => {
           console.debug(platformUrlState);
           const { duration } = platformUrlState.timeRange;
           const since = ` SINCE ${duration/60000} minutes ago`
+          const eventVolumes = []
           return(
             <Grid class-name="primary-grid" spacingType={[Grid.SPACING_TYPE.NONE, Grid.SPACING_TYPE.NONE]}>
               <GridItem className="primary-content-container" columnSpan={12}>
@@ -41,57 +43,24 @@ export default class EventVolumeNerdlet extends React.Component {
                         if (loading) return <Spinner />
                         if (error) return <BlockText>{error.message}</BlockText>
                         if (data) {
-                          console.debug('Raw Data:', data[0].data[0])
-                          // data[0].data[0].eventTypes.forEach((item, i) => {
-                          //   console.debug('Item:', item);
-                          // });
+                          //console.debug('Event Types:', data[0].data[0].eventTypes)
+                          data[0].data[0].eventTypes.forEach((item, i) => {
+                            //console.debug('Item:', item);
+                            <NrqlQuery accountId={this.accountId} query={`FROM \`${item}\` SELECT bytecountestimate() ` + since}>
+                              {({loading, error, data}) => {
+                                if (loading) return <Spinner />
+                                if (error) return <BlockText>{error.message}</BlockText>
+                                if (data) {
+                                  console.debug('Volume Data:', data)
+                                }
+                              }}
+                            </NrqlQuery>
+                          });
                         }
-                        return(
-                          <Table items={data[0].data[0].eventTypes} className="top-chart">
-                            <TableHeader>
-                              <TableHeaderCell
-                                value={({ item }) => item}
-                                sortable
-                                sortingType={this.state.column_0}
-                                sortingOrder={0}
-                                onClick={this._onClickTableHeaderCell.bind(this, 'column_0')}
-                                width="fit-content"
-                              >
-                                Event Type
-                              </TableHeaderCell>
-                              <TableHeaderCell>
-                                Amount of Data (GB) 
-                              </TableHeaderCell>
-                            </TableHeader>
-                            {({ item }) => (
-                              <TableRow onClick={(evt, item, index) => {
-                                console.debug("Clicked:", item)
-                                this.setState({ selectedEventType: item.item })
-                              }}>
-                                <TableRowCell>
-                                  {item}
-                                </TableRowCell>
-                                <TableRowCell alignmentType={TableRowCell.ALIGNMENT_TYPE.RIGHT}>
-                                  <NrqlQuery accountId={this.accountId} query={`FROM \`${item}\` SELECT bytecountestimate() ` + since}>
-                                    {({ data, loading, error }) => {
-                                      if (loading) return <Spinner />
-                                      if (error) return <BlockText>{error.message}</BlockText>
-                                      if (data) {
-                                        //console.debug('Volume data:', data[0].data[0].bytecountestimate)
-                                        var dataGb = data[0].data[0].bytecountestimate/10e8
-                                        dataGb = dataGb.toFixed(2)
-                                        return(dataGb)
-                                      }
-                                    }}
-                                  </NrqlQuery>
-                                </TableRowCell>  
-                              </TableRow>
-                            )
-                          }
-                          </Table>
-                        );
+                        console.debug('Event Volumes', eventVolumes)
+                        return(data[0].data[0].eventTypes)
                       }}
-                    </NrqlQuery> 
+                    </NrqlQuery>
                   </StackItem>
                 </Stack>
                 { selectedEventType && <Stack fullWidth gapType={Stack.GAP_TYPE.LOOSE}>
