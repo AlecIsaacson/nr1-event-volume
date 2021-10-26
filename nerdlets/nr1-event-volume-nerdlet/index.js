@@ -31,7 +31,7 @@ export default class EventVolumeNerdlet extends React.Component {
           console.debug(platformUrlState);
           const { duration } = platformUrlState.timeRange;
           const since = ` SINCE ${duration/60000} minutes ago`
-          const eventVolumes = []
+          var eventVolumes = []
           return(
             <Grid class-name="primary-grid" spacingType={[Grid.SPACING_TYPE.NONE, Grid.SPACING_TYPE.NONE]}>
               <GridItem className="primary-content-container" columnSpan={12}>
@@ -44,21 +44,28 @@ export default class EventVolumeNerdlet extends React.Component {
                         if (error) return <BlockText>{error.message}</BlockText>
                         if (data) {
                           //console.debug('Event Types:', data[0].data[0].eventTypes)
-                          data[0].data[0].eventTypes.forEach((item, i) => {
-                            //console.debug('Item:', item);
-                            <NrqlQuery accountId={this.accountId} query={`FROM \`${item}\` SELECT bytecountestimate() ` + since}>
-                              {({loading, error, data}) => {
-                                if (loading) return <Spinner />
-                                if (error) return <BlockText>{error.message}</BlockText>
-                                if (data) {
-                                  console.debug('Volume Data:', data)
-                                }
-                              }}
-                            </NrqlQuery>
-                          });
+                          return (
+                            data[0].data[0].eventTypes.map((item, i) => {
+                                return (
+                                    <NrqlQuery key={i} accountId={this.accountId} query={`FROM \`${item}\` SELECT bytecountestimate() ` + since}>
+                                        {({loading, error, data}) => {
+                                            if (loading) return <Spinner />
+                                            if (error) return <BlockText>{error.message}</BlockText>
+                                            if (data) {
+                                                console.debug('Inner Query:', item, data[0].data[0].bytecountestimate)
+                                                var eventVolume = {"eventType": item, "eventVolume": data[0].data[0].bytecountestimate}
+                                                eventVolumes.push(eventVolume)
+                                                console.debug("eventVolumes", eventVolumes)
+                                                return (null)
+                                            }
+                                        }}
+                                    </NrqlQuery>
+                                )
+                              }
+                            ));
                         }
                         console.debug('Event Volumes', eventVolumes)
-                        return(data[0].data[0].eventTypes)
+                        return(null)
                       }}
                     </NrqlQuery>
                   </StackItem>
