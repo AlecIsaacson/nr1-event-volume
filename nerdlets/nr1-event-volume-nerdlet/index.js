@@ -55,8 +55,25 @@ export default class EventVolumeNerdlet extends React.Component {
                                                 console.debug('Inner Query:', item, data[0].data[0].bytecountestimate)
                                                 var eventVolume = {"eventType": item, "eventVolume": data[0].data[0].bytecountestimate}
                                                 eventVolumes.push(eventVolume)
-                                                console.debug("eventVolumes", eventVolumes)
-                                                return (null)
+                                                //console.debug("eventVolumes", eventVolumes)
+                                                return (
+                                                  <Table items={eventVolumes} className="top-chart">
+                                                    <TableHeader>
+                                                      <TableHeaderCell value={({ item }) => item.eventType}>
+                                                        Event Type
+                                                      </TableHeaderCell>
+                                                      <TableHeaderCell value={({ item }) => item.eventVolume}>
+                                                        Event Volume
+                                                      </TableHeaderCell>
+                                                    </TableHeader>
+                                                    {({ item }) => (
+                                                      <TableRow>
+                                                        <TableRowCell>{item.eventType}</TableRowCell>
+                                                        <TableRowCell>{item.eventVolume}</TableRowCell>
+                                                      </TableRow>
+                                                    )}
+                                                  </Table>
+                                                )
                                             }
                                         }}
                                     </NrqlQuery>
