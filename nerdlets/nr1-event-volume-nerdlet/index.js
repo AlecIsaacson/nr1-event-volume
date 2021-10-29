@@ -9,97 +9,77 @@ export default class EventVolumeNerdlet extends React.Component {
   constructor(props){
     super(props);
     console.debug("Props", this); //eslint-disable-line
-    this.accountId = 734056;
     this.state = {
-      selectedEventType: null,
+      accountId: 734056,
+      eventVolume: null,
     };
   }
   
-  _onClickTableHeaderCell(key, event, sortingData) {
-    this.setState({ [key]: sortingData.nextSortingType });
+  componentDidMount() {
+    this.updateData(this.props)
   }
+    
+  updateData = props => {
+    const { accountId } = this.state;
+    
+    //console.debug("Props", props)
+    //console.debug("ID / query", accountId, nrqlQuery)
+
+    //if (accountId !== this.state.accountId) {
+      this.setState({ accountId }, () => {
+        if (accountId) {
+          //console.debug("In query")
+          // https://developer.newrelic.com/components/nrql-query
+          NrqlQuery.query({
+            accountId,
+            query: 'SHOW eventTypes'
+          })
+            .then(value => {
+              const eventVolume = [];
+              value.data[0].data[0].eventTypes.forEach((item, i) => { 
+                //console.debug("Item", item)
+                NrqlQuery.query({
+                  accountId,
+                  query: `FROM \`${item}\` SELECT bytecountestimate()`
+                })
+                .then(value => {
+                  //console.debug("Value", item, value.data[0].data[0].bytecountestimate)
+                  eventVolume.push({
+                    eventType: item,
+                    bytecountestimate: value.data[0].data[0].bytecountestimate
+                  });
+                })
+                .catch(err => {
+                  console.debug("Inner Error", err, item)
+                })
+              });
+              // console.debug("Inside Event Volume", eventVolume)
+              this.setState({ eventVolume })
+            })
+            .catch(err => {
+              console.debug("Outer Error", err, item)
+              //this.setState({ eventVolume: { error: err.message } });
+            });
+        } else {
+          //console.debug("In null")
+          this.setState({ eventVolume: null });
+        }
+      });
+    //}
+  };
+    
   
   render() {
     console.debug("State: ", this.state)
-    const { selectedEventType } = this.state;
-    const eventTimeseriesQuery = `FROM \`${selectedEventType}\` SELECT bytecountestimate() TIMESERIES`
-    const eventTypeQuery = `SHOW eventTypes`
+    const { accountId, eventVolume } = this.state;
+    //console.debug(accountId, eventVolume)
     
-    return(
-      <PlatformStateContext.Consumer>
-        {(platformUrlState) => {
-          console.debug(platformUrlState);
-          const { duration } = platformUrlState.timeRange;
-          const since = ` SINCE ${duration/60000} minutes ago`
-          var eventVolumes = []
-          return(
-            <Grid class-name="primary-grid" spacingType={[Grid.SPACING_TYPE.NONE, Grid.SPACING_TYPE.NONE]}>
-              <GridItem className="primary-content-container" columnSpan={12}>
-                <Stack fullWidth directionType={Stack.DIRECTION_TYPE.HORIZONTAL} gapType={Stack.GAP_TYPE.LOOSE}>
-                  <StackItem grow={true} className="row-spacing">
-                  <HeadingText style={{marginLeft: '25px'}}>Event Types in this Account</HeadingText>
-                    <NrqlQuery accountId={this.accountId} query={eventTypeQuery + since}>
-                      {({loading, error, data}) => {
-                        if (loading) return <Spinner />
-                        if (error) return <BlockText>{error.message}</BlockText>
-                        if (data) {
-                          //console.debug('Event Types:', data[0].data[0].eventTypes)
-                          return (
-                            data[0].data[0].eventTypes.map((item, i) => {
-                                return (
-                                    <NrqlQuery key={i} accountId={this.accountId} query={`FROM \`${item}\` SELECT bytecountestimate() ` + since}>
-                                        {({loading, error, data}) => {
-                                            if (loading) return <Spinner />
-                                            if (error) return <BlockText>{error.message}</BlockText>
-                                            if (data) {
-                                                console.debug('Inner Query:', item, data[0].data[0].bytecountestimate)
-                                                var eventVolume = {"eventType": item, "eventVolume": data[0].data[0].bytecountestimate}
-                                                eventVolumes.push(eventVolume)
-                                                //console.debug("eventVolumes", eventVolumes)
-                                                return (
-                                                  <Table items={eventVolumes} className="top-chart">
-                                                    <TableHeader>
-                                                      <TableHeaderCell value={({ item }) => item.eventType}>
-                                                        Event Type
-                                                      </TableHeaderCell>
-                                                      <TableHeaderCell value={({ item }) => item.eventVolume}>
-                                                        Event Volume
-                                                      </TableHeaderCell>
-                                                    </TableHeader>
-                                                    {({ item }) => (
-                                                      <TableRow>
-                                                        <TableRowCell>{item.eventType}</TableRowCell>
-                                                        <TableRowCell>{item.eventVolume}</TableRowCell>
-                                                      </TableRow>
-                                                    )}
-                                                  </Table>
-                                                )
-                                            }
-                                        }}
-                                    </NrqlQuery>
-                                )
-                              }
-                            ));
-                        }
-                        console.debug('Event Volumes', eventVolumes)
-                        return(null)
-                      }}
-                    </NrqlQuery>
-                  </StackItem>
-                </Stack>
-                { selectedEventType && <Stack fullWidth gapType={Stack.GAP_TYPE.LOOSE}>
-                  {console.debug("Timeseries Event Type:", selectedEventType)}
-                  <StackItem grow={true} className="row-spacing">
-                    <HeadingText style={{marginLeft: '25px'}}>{selectedEventType} Volume Timeseries (bytes)</HeadingText>
-                    <LineChart accountId={this.accountId} className="chart" query={eventTimeseriesQuery + since}/>
-                  </StackItem>
-                </Stack>
-                }
-              </GridItem>
-            </Grid>
-          );
-        }}
-      </PlatformStateContext.Consumer>
+    { eventVolume && console.debug("Render Results", eventVolume) }
+    
+    return (
+      <div>
+        { eventVolume && <pre>{JSON.stringify(eventVolume, null, 4)}</pre> }
+      </div>
     );
   }
 }
