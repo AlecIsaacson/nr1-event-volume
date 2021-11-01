@@ -11,7 +11,7 @@ export default class EventVolumeNerdlet extends React.Component {
     console.debug("Props", this); //eslint-disable-line
     this.state = {
       accountId: 734056,
-      eventVolume: null,
+      eventVolumes: [],
     };
   }
   
@@ -22,63 +22,52 @@ export default class EventVolumeNerdlet extends React.Component {
   updateData = props => {
     const { accountId } = this.state;
     
-    //console.debug("Props", props)
-    //console.debug("ID / query", accountId, nrqlQuery)
-
-    //if (accountId !== this.state.accountId) {
-      this.setState({ accountId }, () => {
-        if (accountId) {
-          //console.debug("In query")
-          // https://developer.newrelic.com/components/nrql-query
-          NrqlQuery.query({
-            accountId,
-            query: 'SHOW eventTypes'
-          })
-            .then(value => {
-              const eventVolume = [];
-              value.data[0].data[0].eventTypes.forEach((item, i) => { 
-                //console.debug("Item", item)
-                NrqlQuery.query({
-                  accountId,
-                  query: `FROM \`${item}\` SELECT bytecountestimate()`
-                })
-                .then(value => {
-                  //console.debug("Value", item, value.data[0].data[0].bytecountestimate)
-                  eventVolume.push({
-                    eventType: item,
-                    bytecountestimate: value.data[0].data[0].bytecountestimate
-                  });
-                })
-                .catch(err => {
-                  console.debug("Inner Error", err, item)
-                })
-              });
-              // console.debug("Inside Event Volume", eventVolume)
-              this.setState({ eventVolume })
+    this.setState({ accountId}, () =>{
+      if (accountId) {
+        NrqlQuery.query({
+          accountId,
+          query: 'SHOW eventTypes'
+        })
+        .then(value => {
+          console.debug("Event Types", value)
+          const eventTypes = value.data[0].data[0].eventTypes
+          const eventTypeQueries = eventTypes.map((eventType) => 
+            NrqlQuery.query({
+              accountId,
+              query: `FROM \`${eventType}\` SELECT bytecountestimate()`
             })
-            .catch(err => {
-              console.debug("Outer Error", err, item)
-              //this.setState({ eventVolume: { error: err.message } });
+          );
+          // console.debug('eventTypeQueries', eventTypeQueries)
+          
+          Promise.all(eventTypeQueries).then((values) => {
+            const eventVolumes = [];
+            values.forEach((value, i) => {
+              // console.debug("Promise", value) 
+              console.debug("Data", eventTypes[i], value.data[0].data[0].bytecountestimate)
+              eventVolumes.push({
+                eventType: eventTypes[i],
+                bytecountestimate: value.data[0].data[0].bytecountestimate
+              });
             });
-        } else {
-          //console.debug("In null")
-          this.setState({ eventVolume: null });
-        }
-      });
-    //}
+            this.setState({ eventVolumes })
+          })
+        });
+      }
+    })
   };
+    
     
   
   render() {
     console.debug("State: ", this.state)
-    const { accountId, eventVolume } = this.state;
+    const { accountId, eventVolumes } = this.state;
     //console.debug(accountId, eventVolume)
     
-    { eventVolume && console.debug("Render Results", eventVolume) }
+    //{ eventVolume && console.debug("Render Results", eventVolume) }
     
     return (
       <div>
-        { eventVolume && <pre>{JSON.stringify(eventVolume, null, 4)}</pre> }
+        <pre>{JSON.stringify(eventVolumes, null, 4)}</pre>
       </div>
     );
   }
