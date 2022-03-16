@@ -1,5 +1,8 @@
 //Nerdlet to review all data in an account
 
+//TODO: Consider breaking out by attributes?
+//FROM Log SELECT bytecountestimate(include: {'entity.guid'}) as 'GUID', bytecountestimate()
+
 import React from 'react';
 import { PlatformStateContext, NrqlQuery, Table, TableHeader, TableHeaderCell, TableRow, TableRowCell, Stack, StackItem, HeadingText, Grid, GridItem, LineChart } from 'nr1';
 
@@ -24,7 +27,7 @@ export default class EventVolumeNerdlet extends React.Component {
   updateData = props => {
     const { accountId } = this.state;
     
-    this.setState({ accountId}, () =>{
+    this.setState({ accountId }, () =>{
       if (accountId) {
         NrqlQuery.query({
           accountId,
@@ -39,16 +42,22 @@ export default class EventVolumeNerdlet extends React.Component {
               query: `FROM \`${eventType}\` SELECT bytecountestimate()`
             })
           );
-          // console.debug('eventTypeQueries', eventTypeQueries)
+          console.debug('eventTypeQueries', eventTypeQueries)
           
           Promise.all(eventTypeQueries).then((values) => {
             const eventVolumes = [];
             values.forEach((value, i) => {
-              // console.debug("Promise", value) 
-              // console.debug("Data", eventTypes[i], value.data[0].data[0].bytecountestimate)
+              //console.debug("Promise", value) 
+              if (value.data[0] == undefined) {
+                // console.debug("Undefined data found", i, eventTypes[i], value.error)
+                var byteCountEstimate = 'NaN';
+              } else {
+                var byteCountEstimate = value.data[0].data[0].bytecountestimate
+              };
+              //console.debug("Data", i, eventTypes[i], value.error, byteCountEstimate)
               eventVolumes.push({
                 eventType: eventTypes[i],
-                bytecountestimate: value.data[0].data[0].bytecountestimate
+                bytecountestimate: byteCountEstimate
               });
             });
             this.setState({ eventVolumes })
@@ -115,7 +124,7 @@ export default class EventVolumeNerdlet extends React.Component {
                           }}
                         >
                           <TableRowCell>{item.eventType}</TableRowCell>
-                          <TableRowCell>{(item.bytecountestimate / 10e8).toFixed(2)}</TableRowCell>
+                          <TableRowCell>{(item.bytecountestimate / 10e8).toFixed(4)}</TableRowCell>
                         </TableRow>
                       )}
                     </Table>
