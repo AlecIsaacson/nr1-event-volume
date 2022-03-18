@@ -17,13 +17,15 @@ export default class EventVolumeNerdlet extends React.Component {
       //column_0: TableHeaderCell.SORTING_TYPE.ASCENDING,
       column_1: TableHeaderCell.SORTING_TYPE.DESCENDING,
       eventVolumes: [],
+      myDuration: null,
     };
   }
   
   componentDidMount() {
     this.updateData(this.props)
   }
-    
+  
+  // I need to access the timepicker's duration property in here somehow.
   updateData = props => {
     const { accountId } = this.state;
     
